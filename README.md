@@ -13,11 +13,8 @@
 # 1. 克隆仓库
 git clone https://github.com/0429globetrot/markitdown-web-converter.git
 
-# 2. 进入目录
+# 2. 进入目录并启动
 cd markitdown-web-converter
-
-# 3. 一键启动
-chmod +x run.sh
 ./run.sh
 ```
 
