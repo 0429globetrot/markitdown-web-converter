@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkItDown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- 噪点纹理覆盖层 -->
+    <div class="noise"></div>
+
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-mark">M</div>
+                <div class="logo-text">MarkItDown</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="tag">v0.1.5</span>
+            <span class="tag tag-accent">Web Converter</span>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- 配置区 -->
+        <section class="config">
+            <div class="config-row">
+                <div class="config-field">
+                    <label class="field-label">SOURCE</label>
+                    <div class="input-group">
+                        <input type="text" id="inputFolder" class="input" placeholder="选择源文件夹..." readonly>
+                        <button class="input-action" onclick="openBrowser('input')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                <div class="config-field">
+                    <label class="field-label">OUTPUT</label>
+                    <div class="input-group">
+                        <input type="text" id="outputFolder" class="input" placeholder="留空仅预览，不写入磁盘">
+                        <button class="input-action" onclick="openBrowser('output')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                <div class="config-actions">
+                    <label class="check-label">
+                        <input type="checkbox" id="recursiveCheck">
+                        <span>递归</span>
+                    </label>
+                    <button class="btn-run" id="btnLoad" onclick="loadFiles()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        SCAN
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文件列表 -->
+        <section class="panel" id="fileSection" style="display:none;">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="panel-icon">&#9776;</span>
+                    FILES
+                    <span class="count" id="fileCount">0</span>
+                </div>
+                <div class="panel-tools">
+                    <button class="tool-btn" onclick="selectAll()">ALL</button>
+                    <button class="tool-btn" onclick="deselectAll()">NONE</button>
+                    <button class="btn-run btn-sm" id="btnConvertSelected" onclick="convertSelected()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        SELECTED
+                    </button>
+                    <button class="btn-run btn-sm btn-alt" id="btnConvertAll" onclick="convertAll()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        ALL
+                    </button>
+                </div>
+            </div>
+            <div id="fileList" class="file-list"></div>
+        </section>
+
+        <!-- 进度 -->
+        <section class="panel" id="progressSection" style="display:none;">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="panel-icon spin" id="progressIcon">&#8635;</span>
+                    PROGRESS
+                </div>
+                <span class="progress-label" id="progressText">0 / 0</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </section>
+
+        <!-- 结果 -->
+        <section class="panel" id="resultsSection" style="display:none;">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="panel-icon">&#10003;</span>
+                    RESULTS
+                </div>
+            </div>
+            <div id="resultsList" class="results-list"></div>
+        </section>
+
+        <!-- 预览 -->
+        <section class="panel preview-panel" id="previewSection" style="display:none;">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <span class="panel-icon">&#9783;</span>
+                    PREVIEW
+                    <span class="preview-tag" id="previewFilename"></span>
+                </div>
+                <button class="tool-btn" onclick="closePreview()">CLOSE</button>
+            </div>
+            <div id="previewContent" class="preview-body"></div>
+        </section>
+    </main>
+
+    <!-- 目录浏览器弹窗 -->
+    <div class="modal-bg" id="browserModal" style="display:none;" onclick="closeBrowserOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-head">
+                <span class="modal-title" id="browserTitle">SELECT FOLDER</span>
+                <button class="modal-close" onclick="closeBrowser()">&times;</button>
+            </div>
+            <div class="modal-crumbs" id="browserBreadcrumbs"></div>
+            <div class="modal-list" id="browserBody">
+                <div class="browser-empty">Loading...</div>
+            </div>
+            <div class="modal-foot">
+                <span class="modal-path" id="browserCurrent"></span>
+                <div class="modal-btns">
+                    <button class="tool-btn" onclick="closeBrowser()">CANCEL</button>
+                    <button class="btn-run" onclick="confirmBrowser()">SELECT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
