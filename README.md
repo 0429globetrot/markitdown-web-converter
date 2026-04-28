@@ -120,3 +120,17 @@ rm .env
 del .env
 run.bat
 ```
+
+## 卸载
+
+所有依赖和配置都在项目文件夹内，删除整个文件夹即可完全卸载：
+
+```bash
+# macOS / Linux
+rm -rf markitdown-web-converter
+```
+
+```cmd
+# Windows
+rmdir /s /q markitdown-web-converter
+```
